@@ -1,0 +1,9 @@
+PUT http://localhost:3001/api/blogs/5d041b32a23e4d422495835a
+Content-Type: application/json
+
+{
+  "title": "put blogi",
+  "author": "testi käyttäjä",
+  "url": "https://fullstackopen.com/osa4/backendin_testaaminen",
+  "likes": 28
+}

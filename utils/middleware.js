@@ -1,0 +1,32 @@
+const logger = require('./logger')
+
+const requestLogger = (request, response, next) => {
+  logger.info('Title: ', request.body.title)
+  logger.info('Author:', request.body.author)
+  logger.info('url:   ', request.body.url)
+  logger.info('likes: ', request.body.likes)
+  logger.info('---')
+  next()
+}
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+const errorHandler = (error, request, response, next) => {
+  logger.error(error.message)
+
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
+module.exports = {
+  requestLogger,
+  unknownEndpoint,
+  errorHandler
+}
