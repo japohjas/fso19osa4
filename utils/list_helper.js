@@ -1,7 +1,6 @@
 // palauttaa aina luvun 1
-const dummy = (blogs) => {
-  return 1
-}
+// eslint-disable-next-line no-unused-vars
+const dummy = (blogs) => 1
 
 // Funktio palauttaa blogien yhteenlaskettujen tykkäysten eli likejen määrän.
 const totalLikes = (blogs) => {

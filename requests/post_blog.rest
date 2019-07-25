@@ -1,4 +1,4 @@
-POST http://localhost:3001/api/blogs
+POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
@@ -10,8 +10,8 @@ Content-Type: application/json
 
 
 ###
-# lisätään uusi blogi userId:lle http://localhost:3001/api/users
-POST http://localhost:3001/api/blogs
+# lisätään uusi blogi userId:lle http://localhost:3003/api/users
+POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
@@ -24,7 +24,7 @@ Content-Type: application/json
 
 ###
 # lisätään toinen blogi samalle userId:lle
-POST http://localhost:3001/api/blogs
+POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
@@ -32,12 +32,12 @@ Content-Type: application/json
   "author": "testi käyttäjä",
   "url": "https://fullstackopen.com/osa4/backendin_testaaminen",
   "likes": 60,
-  "userId": "5d081937cb1302139a7fbd82"
+  "userId": "5d0a4e1cb279a32887e2e352"
 }
 
 ###
 # Muistiinpanojen luominen vain kirjautuneille
-POST http://localhost:3001/api/blogs
+POST http://localhost:3003/api/blogs
 Content-Type: application/json
 Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1sdXVra2FpIiwiaWQiOiI1ZDA4MTkzN2NiMTMwMjEzOWE3ZmJkODIiLCJpYXQiOjE1NjA4NTM3NjJ9.rZZl2yKJsm2DJPAycEkAQKeA1u0hDPU3Pmp49eBqQto
 
@@ -45,5 +45,6 @@ Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1sd
   "title": "Muistiinpanojen luominen vain kirjautuneille",
   "author": "testi käyttäjä",
   "url": "https://fullstackopen.com/osa4/backendin_testaaminen",
-  "likes": 99
+  "likes": 99,
+  "userId": "5d0a4e1cb279a32887e2e352"
 }

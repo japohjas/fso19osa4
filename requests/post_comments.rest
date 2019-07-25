@@ -1,0 +1,22 @@
+POST http://localhost:3003/api/blogs/5d0baa0496a6f20626605068/comments
+Content-Type: application/json
+
+{
+  "comment": "eka kommentti"
+}
+
+###
+POST http://localhost:3003/api/blogs/5d0baa0496a6f20626605068/comments
+Content-Type: application/json
+
+{
+  "comment": "toka kommentti"
+}
+
+###
+POST http://localhost:3003/api/blogs/5d0baa0496a6f20626605068/comments
+Content-Type: application/json
+
+{
+  "comment": "sadas kolmas kommentti"
+}

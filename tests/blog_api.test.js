@@ -1,120 +1,167 @@
-const mongoose = require('mongoose')
 const supertest = require('supertest')
-const helper = require('./test_helper')
+const mongoose = require('mongoose')
 const app = require('../app')
+const { initialBlogs, blogsInDb, equalTo, usersInDb } = require('./test_helper')
 const api = supertest(app)
-const User = require('../models/user')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
-beforeEach(async () => {
-  await Blog.deleteMany({})
+describe('when there are blogs saved', () => {
+  beforeEach(async () => {
+    await Blog.remove({})
 
-  const blogObjects = helper.initialBlogs
-    .map(blog => new Blog(blog))
-  const promiseArray = blogObjects.map(b => b.save())
-  await Promise.all(promiseArray)
-})
+    for (let blog of initialBlogs) {
+      let blogObject = new Blog(blog)
+      await blogObject.save()
+    }
+  })
 
-describe('blogs tests', () => {
-  test('blogs are returned as json', async () => {
-    await api
+  test('all blogs are returned as json', async () => {
+    const result = await api
       .get('/api/blogs')
       .expect(200)
       .expect('Content-Type', /application\/json/)
+
+    expect(result.body.length).toBe(initialBlogs.length)
   })
 
-  test('all blogs are returned', async () => {
-    const response = await api.get('/api/blogs')
+  test('blogs have identifier field id', async () => {
+    const result = await api
+      .get('/api/blogs')
 
-    expect(response.body.length).toBe(helper.initialBlogs.length)
+    const oneBlog = result.body[0]
+    expect(oneBlog.id).toBeDefined()
   })
 
-  test('tietokantaan talletettujen olioiden tunnistekenttä on _id', async () => {
-    const response = await api.get('/api/blogs')
-    // models/blog.js - returnedObject.id = returnedObject._id.toString()
-    expect(response.body[0].id).toBeDefined()
-  })
-
-  test('a valid blog can be added ', async () => {
-    const newBlog = {
-      title: 'Uusi Blogi',
-      author: 'Jaako Jumissa',
-      url: 'https://fullstackopen.com/osa4/backendin_testaaminen',
-      likes: 5
-    }
+  test('a blog can be deleted', async () => {
+    const blogsAtStart = await blogsInDb()
+    const blockToDelete = blogsAtStart[0]
 
     await api
-      .post('/api/blogs')
-      .send(newBlog)
+      .delete(`/api/blogs/${blockToDelete.id}`)
+      .expect(204)
+
+    const blogsAtEnd = await blogsInDb()
+
+    const deleted = blogsAtEnd.find(equalTo(blockToDelete))
+
+    expect(deleted).toBe(undefined)
+
+    expect(blogsAtEnd.length).toBe(initialBlogs.length - 1)
+  })
+
+  test('contents of a blog can be changed', async () => {
+    const blogsAtStart = await blogsInDb()
+    const blockToChange = blogsAtStart[0]
+
+    const updatedBlog = { ...blockToChange, likes: blockToChange.likes + 1 }
+
+    await api
+      .put(`/api/blogs/${blockToChange.id}`)
+      .send(updatedBlog)
       .expect(200)
-      .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
+    const blogsAtEnd = await blogsInDb()
 
-    const title = response.body.map(r => r.title)
-    const author = response.body[response.body.length - 1].author
-    const url = response.body[response.body.length - 1].url
-    const likes = response.body[response.body.length - 1].likes
-
-    expect(response.body.length).toBe(helper.initialBlogs.length + 1)
-    expect(title).toContain('Uusi Blogi')
-    expect(author).toContain('Jaako Jumissa')
-    expect(url).toContain('https://fullstackopen.com/osa4/backendin_testaaminen')
-    expect(likes) === 5
+    const changed = blogsAtEnd.find(equalTo(blockToChange))
+    expect(changed.likes).toBe(blockToChange.likes + 1)
   })
 
-  test('jos kentälle likes ei anneta arvoa, asetetaan sen arvoksi 0', async () => {
-    const newBlog = {
-      title: 'Uusi Blogi',
-      author: 'Jaako Jumissa',
-      url: 'https://fullstackopen.com/osa4/backendin_testaaminen',
-      likes: undefined
-    }
+  describe('adding a new blog', () => {
+    it ('increases the blog count', async () => {
+      const newBlog = {
+        author: 'Martin Fowler',
+        title: 'Microservices Resource Guide',
+        url: 'https://martinfowler.com/microservices/',
+        likes: 3,
+      }
 
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(200)
-      .expect('Content-Type', /application\/json/)
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
-    const likes = response.body[response.body.length - 1].likes
+      const blogsAtEnd = await blogsInDb()
 
-    expect(response.body.length).toBe(helper.initialBlogs.length + 1)
-    expect(likes) === 0
-  })
+      expect(blogsAtEnd.length).toBe(initialBlogs.length + 1)
 
-  test('blog without title and url is not added', async () => {
-    const newBlog = {
-      author: 'uuuu',
-      likes: 1
-    }
+      const created = blogsAtEnd.find(equalTo(newBlog))
 
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(400)
+      expect(created).toBeDefined()
+    })
 
-    const blogsAtEnd = await helper.blogsInDb()
+    it('likes get default value if not set', async () => {
+      const newBlog = {
+        author: 'Martin Fowler',
+        title: 'Microservices Resource Guide',
+        url: 'https://martinfowler.com/microservices/'
+      }
 
-    expect(blogsAtEnd.length).toBe(helper.initialBlogs.length)
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+
+      const blogsAtEnd = await blogsInDb()
+
+      const created = blogsAtEnd.find(equalTo(newBlog))
+
+      expect(created.likes).toBe(0)
+    })
+
+    it('blog is not added without url', async () => {
+      const newBlog = {
+        author: 'Martin Fowler',
+        title: 'Microservices Resource Guide',
+        likes: 3,
+      }
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+
+      const blogsAtEnd = await blogsInDb()
+
+      expect(blogsAtEnd.length).toBe(initialBlogs.length)
+    })
+
+    it('blog is not added without title', async () => {
+      const newBlog = {
+        author: 'Martin Fowler',
+        url: 'https://martinfowler.com/microservices/'  ,
+        likes: 3,
+      }
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(400)
+        .expect('Content-Type', /application\/json/)
+
+      const blogsAtEnd = await blogsInDb()
+
+      expect(blogsAtEnd.length).toBe(initialBlogs.length)
+    })
   })
 })
 
-describe('when there is initially one user at db', () => {
+
+describe('when there is initially one user at db', async () => {
   beforeEach(async () => {
-    await User.deleteMany({})
-    const user = new User({ username: 'root', name: 'jp', password: 'sekret' })
+    await User.remove({})
+    const user = new User({ username: 'root', password: 'sekret' })
     await user.save()
   })
 
   test('creation succeeds with a fresh username', async () => {
-    const usersAtStart = await helper.usersInDb()
+    const usersAtStart = await usersInDb()
 
     const newUser = {
       username: 'mluukkai',
-      name: 'ml',
-      password: 'salainen'
+      name: 'Matti Luukkainen',
+      password: 'salainen',
     }
 
     await api
@@ -123,7 +170,7 @@ describe('when there is initially one user at db', () => {
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    const usersAtEnd = await helper.usersInDb()
+    const usersAtEnd = await usersInDb()
     expect(usersAtEnd.length).toBe(usersAtStart.length + 1)
 
     const usernames = usersAtEnd.map(u => u.username)
@@ -131,7 +178,7 @@ describe('when there is initially one user at db', () => {
   })
 
   test('creation fails with proper statuscode and message if username already taken', async () => {
-    const usersAtStart = await helper.usersInDb()
+    const usersAtStart = await usersInDb()
 
     const newUser = {
       username: 'root',
@@ -147,7 +194,49 @@ describe('when there is initially one user at db', () => {
 
     expect(result.body.error).toContain('`username` to be unique')
 
-    const usersAtEnd = await helper.usersInDb()
+    const usersAtEnd = await usersInDb()
+    expect(usersAtEnd.length).toBe(usersAtStart.length)
+  })
+
+  test('creation fails with too short password', async () => {
+    const usersAtStart = await usersInDb()
+
+    const newUser = {
+      username: 'hellas',
+      name: 'Arto Hellas', 
+      password: 'sa',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('pasword minimum length 3')
+
+    const usersAtEnd = await usersInDb()
+    expect(usersAtEnd.length).toBe(usersAtStart.length)
+  })
+
+  test('creation fails with too short username', async () => {
+    const usersAtStart = await usersInDb()
+
+    const newUser = {
+      username: 'he',
+      name: 'Arto Hellas',
+      password: 'salainen',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    expect(result.body.error).toContain('is shorter than the minimum allowed length')
+
+    const usersAtEnd = await usersInDb()
     expect(usersAtEnd.length).toBe(usersAtStart.length)
   })
 })

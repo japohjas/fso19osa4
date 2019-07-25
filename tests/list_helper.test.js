@@ -1,65 +1,6 @@
 const listHelper = require('../utils/list_helper')
 
-test('dummy returns one', () => {
-  const blogs = []
-
-  const result = listHelper.dummy(blogs)
-  expect(result).toBe(1)
-})
-
-describe('total likes', () => {
-  const listWithOneBlog = [
-    {
-      _id: '5a422aa71b54a676234d17f8',
-      title: 'Go To Statement Considered Harmful',
-      author: 'Edsger W. Dijkstra',
-      url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-      likes: 5,
-      __v: 0
-    }
-  ]
-
-  test('when list has only one blog equals the likes of that', () => {
-    const result = listHelper.totalLikes(listWithOneBlog)
-    expect(result).toBe(5)
-  })
-})
-
-describe('total likes 6 blogs', () => {
-  test('when list has six blogs equals the likes of that', () => {
-    const result = listHelper.totalLikes(listWithSixBlogs)
-    expect(result).toBe(7 + 5 + 12 + 10 + 0 + 2)
-  })
-})
-
-describe('favorite blog', () => {
-  test('when list has six blogs find the favourite blog', () => {
-    const result = listHelper.favoriteBlog(listWithSixBlogs)
-    expect(result).toEqual(listWithSixBlogs[2])
-  })
-})
-
-describe('most blogs', () => {
-  test('when list has six blogs find the author with most blogs', () => {
-    const result = listHelper.mostBlogs(listWithSixBlogs)
-    expect(result).toEqual({
-      author: 'Robert C. Martin',
-      blogs: 3
-    })
-  })
-})
-
-describe('most likes', () => {
-  test('when list has six blogs find the author with most likes', () => {
-    const result = listHelper.mostLikes(listWithSixBlogs)
-    expect(result).toEqual({
-      author: 'Edsger W. Dijkstra',
-      likes: 17
-    })
-  })
-})
-
-const listWithSixBlogs = [
+const blogs = [
   {
     _id: '5a422a851b54a676234d17f7',
     title: 'React patterns',
@@ -109,3 +50,107 @@ const listWithSixBlogs = [
     __v: 0
   }
 ]
+
+const oneBlog = [ blogs[0] ]
+
+test('dummy returns 1', () => {
+  const blogs = []
+  const result = listHelper.dummy(blogs)
+  expect(result).toBe(1)
+})
+
+describe('total likes', () => {
+  test('of empty list is zero', () => {
+    expect(listHelper.totalLikes([])).toBe(0)
+  })
+
+  test('when list has only one blog equals the likes of that', () => {
+    const result = listHelper.totalLikes(oneBlog)
+    expect(result).toBe(7)
+  })
+
+  test('of a bigger list is calculated right', () => {
+    const result = listHelper.totalLikes(blogs)
+    expect(result).toBe(36)
+  })
+})
+
+describe('favorite blog', () => {
+  test('of empty list is null', () => {
+    expect(listHelper.favoriteBlog([])).toBe(null)
+  })
+
+  test('the only blog if list has only one', () => {
+    const mostVotes = {
+      title: 'React patterns',
+      author: 'Michael Chan',
+      likes: 7,
+    }
+
+    const result = listHelper.favoriteBlog(oneBlog)
+    expect(result).toEqual(mostVotes)
+  })
+
+  test('the one with most likes', () => {
+    const mostVotes = {
+      title: 'Canonical string reduction',
+      author: 'Edsger W. Dijkstra',
+      likes: 12
+    }
+
+    const result = listHelper.favoriteBlog(blogs)
+    expect(result).toEqual(mostVotes)
+  })
+})
+
+describe('most blogs', () => {
+  test('of empty list is null', () => {
+    expect(listHelper.mostBlogs([])).toBe(null)
+  })
+
+  test('the only author if list has only one blog', () => {
+    const mostVotes = {
+      author: 'Michael Chan',
+      blogs: 1,
+    }
+
+    const result = listHelper.mostBlogs(oneBlog)
+    expect(result).toEqual(mostVotes)
+  })
+
+  test('the one with most blogs', () => {
+    const mostVotes = {
+      author: 'Robert C. Martin',
+      blogs: 3
+    }
+
+    const result = listHelper.mostBlogs(blogs)
+    expect(result).toEqual(mostVotes)
+  })
+})
+
+describe('most likes', () => {
+  test('of empty list is null', () => {
+    expect(listHelper.mostLikes([])).toBe(null)
+  })
+
+  test('the only author if list has only one blog', () => {
+    const mostLikes = {
+      author: 'Michael Chan',
+      likes: 7,
+    }
+
+    const result = listHelper.mostLikes(oneBlog)
+    expect(result).toEqual(mostLikes)
+  })
+
+  test('the one with most likes', () => {
+    const mostVotes = {
+      author: 'Edsger W. Dijkstra',
+      likes: 17
+    }
+
+    const result = listHelper.mostLikes(blogs)
+    expect(result).toEqual(mostVotes)
+  })
+})
